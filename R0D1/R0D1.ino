@@ -1,4 +1,6 @@
 #include "RFID.h"
+#define ReaderSerial Serial
+
 
 enum status{
 	NON_IDENTIFICATION,
@@ -7,17 +9,19 @@ enum status{
 	MUSIC, //reproducir musica
 	RECIEVING_SONG, //recibiendo cancion
 };
-RFID rf;
-#define rxRFID 5
-#define pinRFID 6
-
+RFID r;
+int rxRFID = 10;
+int pinRFID = 6;
 status robot;
 
 void setup()
 {
+    Serial.begin(9600);
+  ReaderSerial.begin(9600);
+
 	robot = NON_IDENTIFICATION;
+	r.begin(rxRFID, pinRFID, &ReaderSerial);
 	// 5 = rx, 6 pin
-	rf =  RFID(rxRFID,pinRFID);
   /* add setup code here */
 }
 

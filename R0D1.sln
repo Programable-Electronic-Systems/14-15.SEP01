@@ -5,6 +5,11 @@ VisualStudioVersion = 12.0.30723.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "R0D1", "R0D1.vcxproj", "{9B68B976-374A-4948-9DEF-7B4CB18F532B}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{4D98A665-212D-41AE-B85E-92936A35D61D}"
+	ProjectSection(SolutionItems) = preProject
+		R0D1.ino = R0D1.ino
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
