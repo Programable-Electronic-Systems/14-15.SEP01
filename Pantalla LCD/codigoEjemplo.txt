@@ -1,0 +1,14 @@
+#include <LiquidCrystal.h>					// Librería para la pantalla LCD
+
+LiquidCrystal lcd(7, 8, 9, 10, 11, 12);		// Inicialización del lcd, indica a que pines digitales de Arduino están conectados los pines
+						// RS, E, D4, D5, D6, D7 respectivamente
+
+void setup()
+{
+	lcd.begin(16, 2);					// Define el tamaño de la pantalla LCD, en nuestro caso 16 de ancho por 2 de alto
+	lcd.setCursor(0, 1);					// Coloca el cursor de escritura en la coordenada X0 Y1
+	lcd.write("Hola, soy R0D1");				// Define el texto a escribir en el Arduino
+}
+
+void loop()
+{}

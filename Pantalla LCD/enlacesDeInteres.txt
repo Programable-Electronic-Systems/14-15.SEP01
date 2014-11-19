@@ -1,0 +1,5 @@
+Enlace al tutorial:
+http://elcajondeardu.blogspot.com.es/2013/12/tutorial-conectando-una-pantalla-lcd.html
+
+Enlace a la documentacion de la libreria:
+http://arduino.cc/en/Reference/LiquidCrystal
