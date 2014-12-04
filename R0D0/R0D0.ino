@@ -1,21 +1,35 @@
-
+#include <IDxx.h>
 #include <SoftwareSerial.h>
 #include <Servo.h>
 #include <LiquidCrystal.h>
+
+/*LCD*/
 LiquidCrystal lcd(2, 3, 4, 5, 6 , 7);
-#define MOTOR_DERECHA 10
-#define MOTOR_IZQUIERDA 9
+
+/* Servos */
+#define MOTOR_DERECHA 9
+#define MOTOR_IZQUIERDA 8
 Servo ruedaBuena; //izquierda
 Servo ruedaMala; //derecha
 
-#define ECHOPIN 25                            // Pin to receive echo pulse
+/*RFID*/ 
+IDxx id;
+SoftwareSerial mySR(12, 14); // RX, TX
+#define ENABLE 13
+String clave = "0F02782075";
+String s;
+char * c [] = {"0F02782075"};
+
+/*Ultrasonidos*/
+#define ECHOPIN 25                           
+// Pin to receive echo pulse
 #define TRIGPIN 23                            // Pin to send trigger pulse
 
-SoftwareSerial mySerial(11, 12); // RX, TX
+/*Bluetooth*/
+SoftwareSerial mySerial(10, 11); // RX, TX
 char ch;
 boolean change = false;
-int rxRFID = 7;
-int pinRFID = 6;
+
 enum status{
 	NON_IDENTIFICATION,
 	IDLE,//ocioso
@@ -26,13 +40,18 @@ status robot;
 String data;
 
 void setup()
-{	Serial.begin(9600);
+{	
+  mySR.begin(2400);
+  pinMode(ENABLE, OUTPUT);
+  id.begin(&mySR, ENABLE, c, sizeof(c)/2);
+  digitalWrite(ENABLE, LOW);
+  Serial.begin(9600);
 	while (!Serial) {
 		; // wait for serial port to connect. Needed for Leonardo only
 	}
 	data = "";
 
-	robot = IDLE;
+	robot =	NON_IDENTIFICATION;
 	// 5 = rx, 6 pin
 	/* add setup code here */
 	Serial.println("Inicializacion hecha");
@@ -41,32 +60,39 @@ void setup()
 	}
 	ruedaBuena.attach(MOTOR_IZQUIERDA);
 	ruedaMala.attach(MOTOR_DERECHA);
-	mySerial.begin(9600);
+	//mySerial.begin(9600);
         lcd.begin(16, 2);
         lcd.setCursor(0,1);
         clear("Hola, soy R0D0");
         delay(1000);
         pinMode(ECHOPIN, INPUT);
         pinMode(TRIGPIN, OUTPUT);
+        s = "";
 
 }
 
 void loop()
 {
     calculateDistance();
+  Serial.println(id.readTagId()); 
 
-	switch (robot)
+	/*switch (robot)
 	{
 	case NON_IDENTIFICATION:
-                clear("Identificate");
+              Serial.println("Identificate");
 
-		data = "";
-		Serial.print(data);
-		read();
-		if (ch == 'a'){
+                s = id.readTagId();
+                delay(1000);
+                if(s.equals(clave)){
+                        Serial.println("identificado");
 			robot = IDLE;
                         clear("ocioso");
 		}
+                else{
+                  Serial.print("Tu id es: ");
+                  Serial.print(s);
+                  Serial.println("fin del id");  
+                }
 
 		break;
 	case IDLE:
@@ -154,7 +180,7 @@ int calculateDistance(){
   int distance = pulseIn(ECHOPIN, HIGH);        // Read in times pulse
   distance= distance/58;                        // Calculate distance from time of pulse
   Serial.println(distance);                     
-  delay(250); 
+//  delay(250); 
   return distance;
   
 }

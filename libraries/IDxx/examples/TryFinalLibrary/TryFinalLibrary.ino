@@ -2,8 +2,8 @@
 #include <IDxx.h>
 
 IDxx i;
-SoftwareSerial mySerial(10, 11); // RX, TX
-#define RFID_ACTIVE 2
+SoftwareSerial mySerial(12, 14); // RX, TX
+#define RFID_ACTIVE 13
 char * c [] = {"0F02782075"};
 
 void setup() {
@@ -13,7 +13,7 @@ pinMode(RFID_ACTIVE, OUTPUT);
 i.begin(&mySerial, RFID_ACTIVE, c, sizeof(c)/2);
 Serial.begin(2400);
 Serial.println(sizeof(c)/2);
-digitalWrite(2, LOW);                  // Activate the RFID reader
+digitalWrite(RFID_ACTIVE, LOW);                  // Activate the RFID reader
 
 }
 
