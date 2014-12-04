@@ -16,7 +16,6 @@ using namespace std;
 
 //
 // begin
-//
 // initialize IDxx serial port
 void IDxx::begin(Stream * serial, int p, char* c[], int i){
 	_serial = serial;
@@ -30,12 +29,13 @@ void IDxx::begin(Stream * serial, int p, char* c[], int i){
 
 bool IDxx::isCorrect(){
 	String s = readTagId();
-	for (int i = 0; i < size; i++){
-		String s1 = correct[i];
-		if (s1.substring(0).equals(s1)){
-			return true;
+	if (s.length()>0)
+		for (int i = 0; i < size; i++){
+			String s1 = correct[i];
+			if (s1.startsWith(s)){
+				return true;
+			}
 		}
-	}
 	return false;
 }
 
@@ -49,7 +49,6 @@ bool IDxx::isCorrect(){
 //
 // read tagId from RFID reader (12 hexadecimal characters); return "" if there is not a tag
 String IDxx::readTagId() {
-
 	String tagId = "";
 	char data;
 	int val = 0;
@@ -60,23 +59,18 @@ String IDxx::readTagId() {
 			bytesread = 0;
 			while (bytesread < 10){
 				if (_serial->available() > 0){
-					val = _serial->read();
-					if (val == 10 || val == 13)
+					data = _serial->read();
+					if (data == 10 || data == 13){
+						tagId = "";
 						break;
-					//##?
-				//	if((val>='0' && val<='9') || (val>='A' && val== 'Z')){
-						tagId += "" + val;
-						bytesread++;
-						/*if (bytesread == 10){
-							return tagId;
-						}
-					}*/
+					}
+					tagId +=  data;
+					bytesread++;
 				}
 			}
 		}
 	}
+                 // Activate the RFID reader
 
-		return tagId ;
-	
-
+	return tagId;
 }

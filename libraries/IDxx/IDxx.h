@@ -22,8 +22,9 @@ class IDxx
 	public:
 		void begin(Stream * serial, int p, char * c [], int i);
 		bool isCorrect();
-	private:
 		String readTagId();
+
+	private:
 		Stream * _serial;
 		char* correct[];
 		int size;
