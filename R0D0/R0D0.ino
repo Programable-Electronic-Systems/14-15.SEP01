@@ -1,7 +1,20 @@
+#include <SOMO14D.h>
+
 #include <IDxx.h>
 #include <SoftwareSerial.h>
 #include <Servo.h>
 #include <LiquidCrystal.h>
+
+/* Altavoz */
+int option = 0;
+const int DIGIMON = 1; 
+const int GOT = 2;
+const int MARIODEAD = 3;
+const int MARIOTHEME = 4;
+const int LOTR = 5;
+const int ZELDA = 6;
+const int IMPERIAL = 7;
+SOMO14D somo14d;
 
 /*LCD*/
 LiquidCrystal lcd(2, 3, 4, 5, 6 , 7);
@@ -11,6 +24,7 @@ LiquidCrystal lcd(2, 3, 4, 5, 6 , 7);
 #define MOTOR_IZQUIERDA 8
 Servo ruedaBuena; //izquierda
 Servo ruedaMala; //derecha
+
 
 /*RFID*/ 
 IDxx id;
@@ -24,6 +38,7 @@ char * c [] = {"0F02782075"};
 #define ECHOPIN 25                           
 // Pin to receive echo pulse
 #define TRIGPIN 23                            // Pin to send trigger pulse
+int distance;
 
 /*Bluetooth*/
 SoftwareSerial mySerial(10, 11); // RX, TX
@@ -35,15 +50,16 @@ enum status{
 	IDLE,//ocioso
 	WALKING, //andando
         MUSIC, //reproducir musica
+        VOICE, //ver voz
 };
 status robot;
 String data;
 
 void setup()
 {	
-  mySR.begin(2400);
+  Serial1.begin(2400);
   pinMode(ENABLE, OUTPUT);
-  id.begin(&mySR, ENABLE, c, sizeof(c)/2);
+  id.begin(&Serial1, ENABLE, c, sizeof(c)/2);
   digitalWrite(ENABLE, LOW);
   Serial.begin(9600);
 	while (!Serial) {
@@ -60,7 +76,7 @@ void setup()
 	}
 	ruedaBuena.attach(MOTOR_IZQUIERDA);
 	ruedaMala.attach(MOTOR_DERECHA);
-	//mySerial.begin(9600);
+	mySerial.begin(9600);
         lcd.begin(16, 2);
         lcd.setCursor(0,1);
         clear("Hola, soy R0D0");
@@ -68,35 +84,36 @@ void setup()
         pinMode(ECHOPIN, INPUT);
         pinMode(TRIGPIN, OUTPUT);
         s = "";
+        somo14d.begin(29, 28, 27);
+     //   somo14d.play(1);
 
 }
 
 void loop()
 {
-    calculateDistance();
-  Serial.println(id.readTagId()); 
 
-	/*switch (robot)
+
+	switch (robot)
 	{
 	case NON_IDENTIFICATION:
               Serial.println("Identificate");
 
                 s = id.readTagId();
+                Serial.println(s);
                 delay(1000);
                 if(s.equals(clave)){
-                        Serial.println("identificado");
+                        Serial.println("identificado, modo IDLE activado");
 			robot = IDLE;
                         clear("ocioso");
 		}
                 else{
-                  Serial.print("Tu id es: ");
-                  Serial.print(s);
-                  Serial.println("fin del id");  
+                   
                 }
 
 		break;
 	case IDLE:
                 //lcd.clear();
+
 		read();
 		switch (ch)
 		{
@@ -104,23 +121,38 @@ void loop()
 			robot = WALKING;
 			//leer arduino
 	                clear("Modo andar");
+                        somo14d.play(IMPERIAL);
+
 			break;
 		case 'm':
                         clear("Music :)");
 			robot = MUSIC;
+                        somo14d.play(option);
 			break;
+                case 'v':
+                        clear("Voz");
+                        robot = VOICE;
 		default:
 			break;
 		}
 		break;
 	case WALKING:
 		read();
+                calculateDistance();
+                Serial.println(distance);
+                if(distance < 10){
+                  ch = 's';
+                }
 		switch (ch)
 		{
 		case 'u':
-                        clear("Adelante");
-                        ruedaBuena.write(0); // set servo to mid-point (90°)
-                        ruedaMala.write(180);
+                        if(!change){
+                          clear("Adelante");
+                        }
+                        
+                          ruedaBuena.write(0); // set servo to mid-point (90°)
+                          ruedaMala.write(180);
+                        
 			break;
                 case 's':
                         ruedaBuena.write(90); // set servo to mid-point (90°)
@@ -129,26 +161,58 @@ void loop()
                         break;
                 case 'l':
                         //lcd:clear();
-                        clear("Left");
-
-                        ruedaBuena.write(90);
-                        ruedaMala.write(180);
+                        if(!change){
+                          clear("Left");
+                        }
+                          ruedaBuena.write(90);
+                          ruedaMala.write(180);
+                        
                         break;
                 case 'r':
                         //lcd.clear();
+                        if(!change){
                         clear("right");
-
-                        ruedaBuena.write(0);
-                        ruedaMala.write(90);                
+                        }
+                          ruedaBuena.write(0);
+                          ruedaMala.write(90);  
+                                  
 		default:
 			break;
 		}
 		break;
 	case MUSIC:
-		break;
-	default:
-		break;
-	}
+              read();
+              Serial.println(option);
+              switch(ch){
+                  case 'l':
+                    if(change){
+                      option--;  
+                      calculateOption();
+                      somo14d.play(option);
+                      change = false;
+                    }
+                  break;
+                  case 'r':
+                    if(change){
+                      option++;
+                      calculateOption();
+                      somo14d.play(option);
+                      change = false;
+                    }
+	         break;
+                case 's':
+                robot = IDLE;
+                
+                change = false;
+                break;
+                	default:
+                		break;
+        	}
+          break;
+        
+        default:
+        break;
+    }
 
 	/* add main program code here */
 
@@ -177,7 +241,7 @@ int calculateDistance(){
   digitalWrite(TRIGPIN, HIGH);                  // Send a 10uS high to trigger ranging
   delayMicroseconds(10);
   digitalWrite(TRIGPIN, LOW);                   // Send pin low again
-  int distance = pulseIn(ECHOPIN, HIGH);        // Read in times pulse
+  distance = pulseIn(ECHOPIN, HIGH);        // Read in times pulse
   distance= distance/58;                        // Calculate distance from time of pulse
   Serial.println(distance);                     
 //  delay(250); 
@@ -185,3 +249,12 @@ int calculateDistance(){
   
 }
 
+void calculateOption(){
+  if(option == 0){
+    option = 7;
+  }  
+  else if(option > 7){
+    option = 1;  
+  }
+
+}
